@@ -29,7 +29,7 @@ internal sealed class GenerateQuestionHandler : IRequestHandler<GenerateQuestion
     {
         if (!await _context.Users.AnyAsync(u => u.Id == request.UserId))
         {
-            throw new NotFoundException();
+            throw new NotFoundException(nameof(User), nameof(User.Id), request.UserId.ToString());
         }
 
         var question = await GenerateQuestion(request);
@@ -50,22 +50,22 @@ internal sealed class GenerateQuestionHandler : IRequestHandler<GenerateQuestion
     {
         var selectedBreedId = _breedProvider.Breeds.PickRandom().First().Id;
         var client = _factory.CreateClient("CatApi");
-        ExternalCatImage image;
+        ExternalCatImageDto image;
 
         try
         {
             _logger.LogTrace($"Calling Cat API to retrieve an image for Breed: {selectedBreedId}");
-            image = (await client.GetFromJsonAsync<List<ExternalCatImage>>($"images/search?breed_ids={selectedBreedId}")).First();
+            image = (await client.GetFromJsonAsync<List<ExternalCatImageDto>>($"images/search?breed_ids={selectedBreedId}")).First();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _logger.LogError($"Failed to retrieve image data from Cat API for Breed: {selectedBreedId}");
-            throw;
+            _logger.LogError($"Failed to retrieve image data from Cat API for Breed: {selectedBreedId}. Error message: {ex.Message}");
+            throw new Exception("Question could not be generated");
         }
 
         if (image is null)
         {
-            throw new Exception();
+            throw new Exception("Question could not be generated");
         }
 
         return new Question
@@ -86,7 +86,7 @@ internal sealed class GenerateQuestionHandler : IRequestHandler<GenerateQuestion
         if (correctBreed is null)
         {
             _logger.LogError($"Encountered an invalid Breed with Id: {correctBreedId}");
-            throw new Exception();
+            throw new Exception("Question could not be generated");
         }
 
         breedList.Remove(correctBreed);
@@ -94,7 +94,7 @@ internal sealed class GenerateQuestionHandler : IRequestHandler<GenerateQuestion
         if (breedList.Count < NumberOfAdditionalBreedOptions)
         {
             _logger.LogError($"Insufficient Breeds available to form multiple choice options");
-            throw new Exception();
+            throw new Exception("Question could not be generated");
         }
 
         var breedOptions = breedList

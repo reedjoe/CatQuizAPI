@@ -1,5 +1,6 @@
 ﻿using CatQuiz.Core.Exceptions;
 using CatQuiz.Data;
+using CatQuiz.Entities;
 using CatQuiz.Shared.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -25,13 +26,13 @@ internal sealed class AnswerQuestionHandler : IRequestHandler<AnswerQuestionRequ
 
         if (question is null)
         {
-            throw new NotFoundException();
+            throw new NotFoundException(nameof(Question), nameof(Question.Id), request.QuestionId.ToString());
         }
 
         if (question.AnswerStatus != AnswerStatus.Unanswered)
         {
             _logger.LogError($"User with Id: {request.UserId} attempted to answer an already answered question");
-            throw new BadRequestException();
+            throw new BadRequestException("This question has already been answered");
         }
 
         var isCorrectAnswer = request.BreedId == question.CorrectBreedId;

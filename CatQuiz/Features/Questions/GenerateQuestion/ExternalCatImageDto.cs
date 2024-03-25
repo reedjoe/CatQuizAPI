@@ -2,7 +2,7 @@
 
 namespace CatQuiz.Features.Questions.GenerateQuestion;
 
-public class ExternalCatImage
+public class ExternalCatImageDto
 {
     public required string Id { get; set; }
 

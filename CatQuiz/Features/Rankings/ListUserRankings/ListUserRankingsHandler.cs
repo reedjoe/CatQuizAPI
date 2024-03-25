@@ -25,7 +25,7 @@ internal sealed class ListUserRankingsHandler : IRequestHandler<ListUserRankings
 
         if (usersWithQuestions.Any() != true)
         {
-            throw new NotFoundException();
+            throw new NotFoundException("No users were found");
         }
 
         var userRankings = usersWithQuestions.Select(u => new UserRankingDto
